@@ -1,4 +1,4 @@
-import requests#test
+import requests
 from fastapi import FastAPI, Request, Form, Response
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
