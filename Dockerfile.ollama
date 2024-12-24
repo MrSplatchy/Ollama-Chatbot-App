@@ -1,0 +1,10 @@
+FROM ollama/ollama
+
+# Copiez le script dans l'image
+COPY ./ollama/pull-llama3.sh /pull-llama3.sh
+
+# Assurez-vous que le script est exécutable
+RUN chmod +x /pull-llama3.sh
+
+# Exécution du script directement, sans besoin de shell
+ENTRYPOINT ["/pull-llama3.sh"]
