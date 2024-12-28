@@ -4,58 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Response</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f5f5f5;
-            font-family: Arial, sans-serif;
-        }
-        textarea {
-            width: 100%;
-            max-width: 800px; /* Limite la largeur */
-            height: 100px;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-        button {
-            font-size: 16px;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .response-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            flex-grow: 1; /* Prend tout l'espace disponible */
-            width: 100%;
-        }
-        .response-container {
-            padding: 15px;
-            background-color: #f4f4f4;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            max-width: 800px;
-            word-wrap: break-word;
-            white-space: pre-wrap; /* Affiche les sauts de ligne */
-            text-align: center; /* Centre le texte */
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
 </head>
 <body>
     <h1>AI Response Generator</h1>
-    <form action="/" method="post">
+    <form id="promptForm">
         <label for="prompt">Enter your prompt:</label>
         <textarea id="prompt" name="prompt" placeholder="Type your prompt here..."></textarea>
         <br>
@@ -63,12 +16,49 @@
     </form>
     
     <div class="response-wrapper">
-        {% if response %}
-            <div class="response-container">
-                <h2>Generated Response:</h2>
-                <p>{{ response }}</p>
-            </div>
-        {% endif %}
+        <div class="response-container">
+            <h2>Generated Response:</h2>
+            <p id="response"></p>
+        </div>
     </div>
+
+    <script>
+        document.getElementById('promptForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const prompt = document.getElementById('prompt').value;
+            const responseElement = document.getElementById('response');
+            responseElement.textContent = ''; // Clear previous response
+
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ prompt: prompt })
+            })
+            .then(response => {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+
+                function read() {
+                    reader.read().then(({ done, value }) => {
+                        if (done) {
+                            return;
+                        }
+                        const textChunk = decoder.decode(value, { stream: true });
+                        console.log("Chunk received from server:", textChunk); // Log côté client
+                        responseElement.textContent += textChunk;
+                        read();
+                    });
+                }
+
+                read();
+            })
+            .catch(error => {
+                console.error('Fetch error:', error); // Log côté client
+                responseElement.textContent = 'Error: ' + error;
+            });
+        });
+    </script>
 </body>
 </html>

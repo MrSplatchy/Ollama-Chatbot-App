@@ -1,10 +1,10 @@
 FROM ollama/ollama
 
 # Copiez le script dans l'image
-COPY ./ollama/pull-llama3.sh /pull-llama3.sh
+COPY ./ollama/pull-model.sh /pull-model.sh
 
 # Assurez-vous que le script est exécutable
-RUN chmod +x /pull-llama3.sh
+RUN chmod +x /pull-model.sh
 
 # Exécution du script directement, sans besoin de shell
-ENTRYPOINT ["/pull-llama3.sh"]
+ENTRYPOINT ["/pull-model.sh"]
