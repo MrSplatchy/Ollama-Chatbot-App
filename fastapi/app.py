@@ -26,9 +26,9 @@ async def ask(request: Request, prompt: str = Form(...)):
             json={
                 "prompt": prompt,
                 "stream": True,
-                "model": "mistral",
+                "model": "llama3.2:1b",
                 "options": {
-            "n_ctx_per_seq": 8192  #U can adjust this value as needed
+            "n_ctx_per_seq": 2048  #U can adjust this value as needed
                 }
             },
             headers={"Content-Type": "application/json"},
