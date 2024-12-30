@@ -5,7 +5,7 @@
 pid=$!
 sleep 5
 
-echo "Pulling mistral model"
-ollama pull llama3.2:1
+echo "Pulling llama model"
+ollama pull llama3.2:1b
 
 wait $pid
