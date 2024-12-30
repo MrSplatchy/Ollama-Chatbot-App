@@ -1,46 +1,136 @@
+/* Style général */
 body {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
     height: 100vh;
     margin: 0;
-    background-color: #f5f5f5;
+    background-color: #e5ddd5;
     font-family: Arial, sans-serif;
+    overflow: hidden; /* Empêche tout débordement inattendu */
+    padding: 10px; /* Ajoute de l'espace autour du contenu */
+    box-sizing: border-box;
 }
-textarea {
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 800px;
     width: 100%;
-    max-width: 800px; /* Limite la largeur */
-    height: 100px;
-    font-size: 16px;
-    margin-bottom: 10px;
+    margin: 0 auto;
+    background-color: #fff;
+    box-shadow: 0 1px 1px 0 rgba(0,0,0,.06), 0 2px 5px 0 rgba(0,0,0,.2);
+    height: 100%; /* S'étend sur toute la hauteur de l'écran */
+    border-radius: 10px; /* Coins légèrement arrondis */
+    padding: 10px; /* Ajoute de l'espace à l'intérieur */
+    box-sizing: border-box;
+    padding-bottom: 80px; /* Espace pour éviter que les messages ne soient masqués par la zone de saisie */
 }
+
+/* Zone de messages */
+.chat-messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    gap: 10px; /* Ajoute de l'espace entre les messages */
+}
+
+/* Messages généraux */
+.message {
+    max-width: 80%; /* Taille maximale des bulles */
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 15px;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* Messages de l'utilisateur (alignés à droite) */
+.user-message {
+    align-self: flex-end;
+    background-color: #d4f8c4; /* Vert clair */
+    color: #333;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: right;
+    border-radius: 15px 15px 0 15px; /* Coins arrondis pour l'utilisateur */
+}
+
+/* Messages de l'IA (alignés à gauche) */
+.bot-message {
+    align-self: flex-start;
+    background-color: #e6f3ff; /* Bleu clair */
+    color: #333;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border: 1px solid #b3d8ff;
+    border-radius: 15px 15px 15px 0; /* Coins arrondis pour l'IA */
+    white-space: pre-wrap; /* Respecte les sauts de ligne (\n) */
+}
+
+/* Badges pour différencier les messages */
+.user-message::before,
+.bot-message::before {
+    position: absolute;
+    top: -10px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.user-message::before {
+    content: "Vous";
+    right: 10px; /* Aligné à droite pour vos messages */
+}
+
+.bot-message::before {
+    content: "IA";
+    left: 10px; /* Aligné à gauche pour les messages de l'IA */
+}
+
+/* Zone de saisie fixée en bas */
+.chat-input {
+    display: flex;
+    padding: 10px;
+    background-color: #f0f0f0;
+    position: fixed; /* Fixée en bas de la fenêtre */
+    bottom: 0; /* Collée en bas */
+    left: 0; /* S'étend sur toute la largeur */
+    right: 0; /* S'étend sur toute la largeur */
+    box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1); /* Ombre subtile */
+    z-index: 10; /* Toujours au-dessus */
+}
+
+/* Champ de saisie de texte */
+textarea {
+    flex-grow: 1;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 15px;
+    font-size: 15px;
+    max-height: 100px;
+    resize: none;
+    box-sizing: border-box;
+    overflow: hidden; /* Empêche le débordement */
+}
+
+/* Bouton d'envoi */
 button {
-    font-size: 16px;
-    padding: 10px 20px;
-    background-color: #4CAF50;
+    background-color: #075e54;
     color: white;
     border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    margin-left: 10px;
     cursor: pointer;
-}
-button:hover {
-    background-color: #45a049;
-}
-.response-wrapper {
     display: flex;
-    justify-content: center;
     align-items: center;
-    flex-direction: column;
-    flex-grow: 1; /* Prend tout l'espace disponible */
-    width: 100%;
+    justify-content: center;
 }
-.response-container {
-    padding: 15px;
-    background-color: #f4f4f4;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    max-width: 800px;
-    word-wrap: break-word;
-    white-space: pre-wrap; /* Affiche les sauts de ligne */
-    text-align: center; /* Centre le texte */
+
+button:hover {
+    background-color: #128C7E;
 }

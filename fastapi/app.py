@@ -26,7 +26,10 @@ async def ask(request: Request, prompt: str = Form(...)):
             json={
                 "prompt": prompt,
                 "stream": True,
-                "model": "mistral"
+                "model": "mistral",
+                "options": {
+            "n_ctx_per_seq": 8192  #U can adjust this value as needed
+                }
             },
             headers={"Content-Type": "application/json"},
             stream=True
@@ -39,29 +42,29 @@ async def ask(request: Request, prompt: str = Form(...)):
             )
 
         def generate():
-            try:
-                buffer = ""
-                for chunk in res.iter_content(chunk_size=64):
-                    if chunk:
-                        buffer += chunk.decode('utf-8')
-                        print(f"Chunk received: {buffer}")  # Log des données reçues
+            buffer = ""
+            for chunk in res.iter_content(chunk_size=16):  # Increased chunk size for efficiency
+                if chunk:
+                    buffer += chunk.decode('utf-8')
+                    while '}' in buffer:
                         try:
-                            data = json.loads(buffer)
+                            end = buffer.index('}') + 1
+                            data = json.loads(buffer[:end])
                             if "response" in data:
                                 yield data["response"]
-                                buffer = ""
+                            buffer = buffer[end:]
                         except json.JSONDecodeError:
-                            # Gérer les données partiellement valides
-                            if '}' in buffer:
-                                parts = buffer.rsplit('}', 1)
-                                try:
-                                    data = json.loads(parts[0] + '}')
-                                    yield data["response"]
-                                    buffer = parts[1]  # Conserver les restes
-                                except json.JSONDecodeError:
-                                    pass  # Ignorer si ce n'est pas encore valide
-            except Exception as e:
-                yield f"Error: {str(e)}"
+                            break  # Wait for more data if JSON is incomplete
+            
+            # Process any remaining data in the buffer
+            if buffer:
+                try:
+                    data = json.loads(buffer)
+                    if "response" in data:
+                        yield data["response"]
+                except json.JSONDecodeError:
+                    pass  # Ignore if the remaining data is not valid JSON
+
 
         return StreamingResponse(generate(), media_type="text/plain")
     except Exception as e:

@@ -3,32 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Response</title>
+    <title>AI Chat</title>
     <link rel="stylesheet" type="text/css" href="/static/style.css">
 </head>
 <body>
-    <h1>AI Response Generator</h1>
-    <form id="promptForm">
-        <label for="prompt">Enter your prompt:</label>
-        <textarea id="prompt" name="prompt" placeholder="Type your prompt here..."></textarea>
-        <br>
-        <button type="submit">Submit</button>
-    </form>
-    
-    <div class="response-wrapper">
-        <div class="response-container">
-            <h2>Generated Response:</h2>
-            <p id="response"></p>
+    <div class="chat-container">
+        <div class="chat-header">AI Chat</div>
+        <div class="chat-messages" id="chatMessages">
+            <!-- Les messages seront ajoutés ici dynamiquement -->
         </div>
+        <form id="promptForm" class="chat-input">
+            <textarea id="prompt" name="prompt" placeholder="Type a message..."></textarea>
+            <button type="submit">➤</button>
+        </form>
     </div>
 
     <script>
         document.getElementById('promptForm').addEventListener('submit', function(event) {
             event.preventDefault();
-            const prompt = document.getElementById('prompt').value;
-            const responseElement = document.getElementById('response');
-            responseElement.textContent = ''; // Clear previous response
-
+            const prompt = document.getElementById('prompt').value.trim();
+            const chatMessages = document.getElementById('chatMessages');
+    
+            // Vérifier si le message n'est pas vide
+            if (prompt === '') return;
+    
+            // Ajouter le message de l'utilisateur
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user-message';
+            userMessage.textContent = prompt;
+            chatMessages.appendChild(userMessage);
+    
+            // Effacer le champ de saisie
+            document.getElementById('prompt').value = '';
+    
+            // Créer un élément pour la réponse du bot avec un indicateur de chargement
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot-message';
+            botMessage.innerHTML = '<div class="loading">Thinking...</div>';
+            chatMessages.appendChild(botMessage);
+    
+            // Faire défiler vers le bas
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+    
             fetch('/', {
                 method: 'POST',
                 headers: {
@@ -37,26 +53,33 @@
                 body: new URLSearchParams({ prompt: prompt })
             })
             .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder('utf-8');
-
+    
+                // Supprimer l'indicateur de chargement
+                botMessage.innerHTML = '';
+    
                 function read() {
                     reader.read().then(({ done, value }) => {
                         if (done) {
                             return;
                         }
                         const textChunk = decoder.decode(value, { stream: true });
-                        console.log("Chunk received from server:", textChunk); // Log côté client
-                        responseElement.textContent += textChunk;
+                        console.log("Chunk received from server:", textChunk);
+                        botMessage.innerHTML += textChunk.replace(/\n/g, '<br>');
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
                         read();
                     });
                 }
-
+    
                 read();
             })
             .catch(error => {
-                console.error('Fetch error:', error); // Log côté client
-                responseElement.textContent = 'Error: ' + error;
+                console.error('Fetch error:', error);
+                botMessage.innerHTML = '<span style="color: red;">Error: Unable to get response. Please try again.</span>';
             });
         });
     </script>

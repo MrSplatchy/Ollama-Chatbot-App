@@ -7,8 +7,11 @@ WORKDIR /app
 # Copie les fichiers nécessaires
 COPY ./fastapi /app
 
+# Copie le fichier requirements.txt
+COPY requirements.txt /app/
+
 # Installe les dépendances
-RUN pip install --no-cache-dir fastapi uvicorn requests jinja2 python-multipart
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose le port utilisé par FastAPI
 EXPOSE 8000

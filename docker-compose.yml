@@ -2,9 +2,9 @@ services:
   fastapi-app:
     build:
       context: .
-      dockerfile: Dockerfile.fastapi  # Indiquer le Dockerfile pour l'application FastAPI
+      dockerfile: Dockerfile.fastapi
     ports:
-      - "8000:8000"
+      - "0.0.0.0:8000:8000"
     networks:
       - app-network
     depends_on:
@@ -13,7 +13,7 @@ services:
   ollama:
     build:
       context: .
-      dockerfile: Dockerfile.ollama  # Indiquer le Dockerfile pour Ollama
+      dockerfile: Dockerfile.ollama
     container_name: ollama
     ports:
       - "11434:11434"
