@@ -27,9 +27,9 @@ async def ask(request: Request, prompt: str = Form(...)):
                 "prompt": prompt,
                 "stream": True,
                 "model": "llama3.2:1b",
-                "options": {
-            "n_ctx_per_seq": 2048  #U can adjust this value as needed
-                }
+#               "options": {
+#            "n_ctx_per_seq": 2048  #U can adjust this value as needed
+#                } 
             },
             headers={"Content-Type": "application/json"},
             stream=True
