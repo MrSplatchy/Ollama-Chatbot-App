@@ -11,6 +11,9 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Class-level variable to store the previous prompt
+previous_prompt = ""
+
 @app.get("/", response_class=HTMLResponse)
 def show_form(request: Request):
     """Affiche le formulaire pour entrer un prompt."""
@@ -20,16 +23,18 @@ def show_form(request: Request):
 async def ask(request: Request, prompt: str = Form(...)):
     """Traitement du prompt et affichage du résultat en streaming."""
     
+    global previous_prompt
+    
     try:
+        # Combine the previous prompt and the current prompt for context
+        combined_prompt = f"{previous_prompt}\n{prompt}"
+        
         res = requests.post(
             'http://ollama:11434/api/generate',
             json={
-                "prompt": prompt,
+                "prompt": combined_prompt,
                 "stream": True,
                 "model": "llama3.2:1b",
-#               "options": {
-#            "n_ctx_per_seq": 2048  #U can adjust this value as needed
-#                } 
             },
             headers={"Content-Type": "application/json"},
             stream=True
@@ -51,6 +56,8 @@ async def ask(request: Request, prompt: str = Form(...)):
                             end = buffer.index('}') + 1
                             data = json.loads(buffer[:end])
                             if "response" in data:
+                                # Update the previous prompt with the response
+                                previous_prompt = data["response"]
                                 yield data["response"]
                             buffer = buffer[end:]
                         except json.JSONDecodeError:
@@ -61,6 +68,8 @@ async def ask(request: Request, prompt: str = Form(...)):
                 try:
                     data = json.loads(buffer)
                     if "response" in data:
+                        # Update the previous prompt with the response
+                        previous_prompt = data["response"]
                         yield data["response"]
                 except json.JSONDecodeError:
                     pass  # Ignore if the remaining data is not valid JSON
