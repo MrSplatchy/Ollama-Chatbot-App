@@ -1,8 +1,8 @@
-import requests
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+import requests
 import json
 
 app = FastAPI()
@@ -11,28 +11,28 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Class-level variable to store the previous prompt
-previous_prompt = ""
+# Variable globale pour stocker l'historique de la conversation
+conversation_history = []
 
 @app.get("/", response_class=HTMLResponse)
 def show_form(request: Request):
-    """Affiche le formulaire pour entrer un prompt."""
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/", response_class=HTMLResponse)
 async def ask(request: Request, prompt: str = Form(...)):
-    """Traitement du prompt et affichage du résultat en streaming."""
-    
-    global previous_prompt
-    
+    global conversation_history
+
     try:
-        # Combine the previous prompt and the current prompt for context
-        combined_prompt = f"{previous_prompt}\n{prompt}"
-        
+        # Ajouter le prompt de l'utilisateur à l'historique
+        conversation_history.append({"role": "user", "content": prompt})
+
+        # Préparer le contexte complet pour l'API
+        context = "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history])
+        # Envoi de la requête au modèle (API)
         res = requests.post(
             'http://ollama:11434/api/generate',
             json={
-                "prompt": combined_prompt,
+                "prompt": context,
                 "stream": True,
                 "model": "llama3.2:1b",
             },
@@ -48,7 +48,8 @@ async def ask(request: Request, prompt: str = Form(...)):
 
         def generate():
             buffer = ""
-            for chunk in res.iter_content(chunk_size=16):  # Increased chunk size for efficiency
+            full_response = ""
+            for chunk in res.iter_content(chunk_size=16):
                 if chunk:
                     buffer += chunk.decode('utf-8')
                     while '}' in buffer:
@@ -56,24 +57,15 @@ async def ask(request: Request, prompt: str = Form(...)):
                             end = buffer.index('}') + 1
                             data = json.loads(buffer[:end])
                             if "response" in data:
-                                # Update the previous prompt with the response
-                                previous_prompt = data["response"]
-                                yield data["response"]
+                                response_chunk = data["response"]
+                                full_response += response_chunk
+                                yield response_chunk
                             buffer = buffer[end:]
                         except json.JSONDecodeError:
-                            break  # Wait for more data if JSON is incomplete
-            
-            # Process any remaining data in the buffer
-            if buffer:
-                try:
-                    data = json.loads(buffer)
-                    if "response" in data:
-                        # Update the previous prompt with the response
-                        previous_prompt = data["response"]
-                        yield data["response"]
-                except json.JSONDecodeError:
-                    pass  # Ignore if the remaining data is not valid JSON
+                            break
 
+            # Ajouter la réponse complète à l'historique de la conversation
+            conversation_history.append({"role": "assistant", "content": full_response})
 
         return StreamingResponse(generate(), media_type="text/plain")
     except Exception as e:
@@ -81,3 +73,4 @@ async def ask(request: Request, prompt: str = Form(...)):
             iter([f"Error: {str(e)}"]),
             media_type="text/plain"
         )
+

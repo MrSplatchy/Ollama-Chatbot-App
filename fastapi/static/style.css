@@ -134,3 +134,30 @@ button {
 button:hover {
     background-color: #128C7E;
 }
+/* Ajoutez ces styles à la fin de votre fichier style.css */
+
+#sendButton, #stopButton {
+    background-color: #075e54;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    margin-left: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#sendButton:hover, #stopButton:hover {
+    background-color: #128C7E;
+}
+
+#stopButton {
+    background-color: #c0392b;
+}
+
+#stopButton:hover {
+    background-color: #e74c3c;
+}
