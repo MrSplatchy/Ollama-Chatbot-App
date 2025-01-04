@@ -5,22 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Chat</title>
     <link rel="stylesheet" type="text/css" href="/static/style.css">
-    <style>
-        .loading-indicator {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 10px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
 </head>
 <body>
 <div class="chat-container">
@@ -34,114 +18,145 @@
         <div id="loadingIndicator" class="loading-indicator" style="display: none;"></div>
     </form>
 </div>
+ <script>
+     const promptForm = document.getElementById('promptForm');
+     const promptInput = document.getElementById('prompt');
+     const sendButton = document.getElementById('sendButton');
+     const chatMessages = document.getElementById('chatMessages');
+     let currentController = null;
+     let isGenerating = false;
 
-<script>
-    const promptForm = document.getElementById('promptForm');
-    const promptInput = document.getElementById('prompt');
-    const sendButton = document.getElementById('sendButton');
-    const chatMessages = document.getElementById('chatMessages');
-    let currentController = null;
-    let isGenerating = false;
+     sendButton.addEventListener('click', handleSendOrStop);
 
-    sendButton.addEventListener('click', handleSendOrStop);
+     // Fonction pour ajuster automatiquement la hauteur du chat input
+     function autoResizeChatInput() {
+         const chatInput = document.querySelector('.chat-input');
+         const textarea = chatInput.querySelector('textarea');
 
-    async function handleSendOrStop() {
-        if (isGenerating) {
-            // Si on génère déjà, on arrête la génération
-            if (currentController) {
-                currentController.abort();
-                isGenerating = false;
-                sendButton.textContent = '➤';
-                sendButton.style.backgroundColor = '';
-                document.getElementById('loadingIndicator').style.display = 'none';
-            }
-        } else {
-            // Sinon, on commence une nouvelle génération
-            await generateResponse();
-        }
-    }
+         // Réinitialiser la hauteur
+         textarea.style.height = 'auto';
+         chatInput.style.height = 'auto';
 
-    async function generateResponse() {
-        const prompt = promptInput.value.trim();
-        if (prompt === '') return;
+         // Calculer la nouvelle hauteur
+         const newHeight = Math.min(textarea.scrollHeight, 200); // Maximum 200px
 
-        isGenerating = true;
-        sendButton.textContent = '■';
-        sendButton.style.backgroundColor = 'red';
-        document.getElementById('loadingIndicator').style.display = 'inline-block';
+         // Appliquer la nouvelle hauteur
+         textarea.style.height = newHeight + 'px';
+         chatInput.style.height = (newHeight + 20) + 'px'; // +20px pour le padding
+     }
 
-        addMessage(prompt, 'user-message');
-        promptInput.value = '';
+     // Appeler autoResizeChatInput lorsque l'utilisateur tape
+     promptInput.addEventListener('input', autoResizeChatInput);
 
-        const botMessage = addMessage('Thinking...', 'bot-message');
+     async function handleSendOrStop() {
+         if (isGenerating) {
+             // Si on génère déjà, on arrête la génération
+             if (currentController) {
+                 currentController.abort();
+                 isGenerating = false;
+                 sendButton.textContent = '➤';
+                 sendButton.style.backgroundColor = '';
+                 document.getElementById('loadingIndicator').style.display = 'none';
+             }
+         } else {
+             // Sinon, on commence une nouvelle génération
+             await generateResponse();
+         }
+     }
 
-        try {
-            currentController = new AbortController();
-            const signal = currentController.signal;
+     async function generateResponse() {
+         const prompt = promptInput.value.trim();
+         if (prompt === '') return;
 
-            const response = await fetch('/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({ prompt: prompt }),
-                signal: signal
-            });
+         isGenerating = true;
+         sendButton.textContent = '■';
+         sendButton.style.backgroundColor = 'red';
+         document.getElementById('loadingIndicator').style.display = 'inline-block';
 
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
+         addMessage(prompt, 'user-message');
+         promptInput.value = '';
+         autoResizeChatInput(); // Ajuster la taille après avoir effacé le contenu
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder('utf-8');
+         const botMessage = addMessage('Thinking...', 'bot-message');
 
-            botMessage.innerHTML = '';
+         try {
+             currentController = new AbortController();
+             const signal = currentController.signal;
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                const textChunk = decoder.decode(value, { stream: true });
-                botMessage.innerHTML += textChunk.replace(/\n/g, '<br>');
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-        } catch (error) {
-            if (error.name === 'AbortError') {
-                console.log('Fetch aborted');
-                botMessage.innerHTML += '<br><i>Message generation stopped.</i>';
-            } else {
-                console.error('Fetch error:', error);
-                botMessage.innerHTML = '<span style="color: red;">Error: Unable to get response. Please try again.</span>';
-            }
-        } finally {
-            isGenerating = false;
-            sendButton.textContent = '➤';
-            sendButton.style.backgroundColor = '';
-            currentController = null;
-            document.getElementById('loadingIndicator').style.display = 'none';
-        }
-    }
+             const response = await fetch('/', {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/x-www-form-urlencoded',
+                 },
+                 body: new URLSearchParams({ prompt: prompt }),
+                 signal: signal
+             });
 
-    function addMessage(content, className) {
-        const messageElement = document.createElement('div');
-        messageElement.className = `message ${className}`;
-        messageElement.innerHTML = content;
-        chatMessages.appendChild(messageElement);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        return messageElement;
-    }
+             if (!response.ok) {
+                 throw new Error('Network response was not ok');
+             }
 
-    // Écouter les touches pour arrêter la génération
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape' && isGenerating) {
-            handleSendOrStop();
-        }
-    });
+             const reader = response.body.getReader();
+             const decoder = new TextDecoder('utf-8');
 
-    // Empêcher la soumission du formulaire par la touche Entrée
-    promptForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-    });
-</script>
+             botMessage.innerHTML = '';
+
+             while (true) {
+                 const { done, value } = await reader.read();
+                 if (done) break;
+                 const textChunk = decoder.decode(value, { stream: true });
+                 botMessage.innerHTML += textChunk.replace(/\n/g, '<br>');
+                 chatMessages.scrollTop = chatMessages.scrollHeight;
+             }
+         } catch (error) {
+             if (error.name === 'AbortError') {
+                 console.log('Fetch aborted');
+                 botMessage.innerHTML += '<br><i>Message generation stopped.</i>';
+             } else {
+                 console.error('Fetch error:', error);
+                 botMessage.innerHTML = '<span style="color: red;">Error: Unable to get response. Please try again.</span>';
+             }
+         } finally {
+             isGenerating = false;
+             sendButton.textContent = '➤';
+             sendButton.style.backgroundColor = '';
+             currentController = null;
+             document.getElementById('loadingIndicator').style.display = 'none';
+         }
+     }
+
+     function addMessage(content, className) {
+         const messageElement = document.createElement('div');
+         messageElement.className = `message ${className}`;
+         messageElement.innerHTML = content;
+         chatMessages.appendChild(messageElement);
+         chatMessages.scrollTop = chatMessages.scrollHeight;
+         return messageElement;
+     }
+
+     // Écouter les touches pour arrêter la génération
+     document.addEventListener('keydown', function(event) {
+         if (event.key === 'Escape' && isGenerating) {
+             handleSendOrStop();
+         }
+     });
+
+     // Empêcher la soumission du formulaire par défaut
+     promptForm.addEventListener('submit', function(event) {
+         event.preventDefault();
+     });
+
+     // Gérer l'envoi du prompt avec la touche Entrée
+     promptInput.addEventListener('keydown', function(event) {
+         if (event.key === 'Enter' && !event.shiftKey) {
+             event.preventDefault(); // Empêcher le saut de ligne par défaut
+             handleSendOrStop();
+         }
+     });
+
+     // Initialiser la taille du chat input
+     autoResizeChatInput();
+ </script>
 </body>
 </html>
 

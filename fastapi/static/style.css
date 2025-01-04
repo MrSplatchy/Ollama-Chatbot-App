@@ -95,26 +95,35 @@ body {
     display: flex;
     padding: 10px;
     background-color: #f0f0f0;
-    position: fixed; /* Fixée en bas de la fenêtre */
-    bottom: 0; /* Collée en bas */
-    left: 0; /* S'étend sur toute la largeur */
-    right: 0; /* S'étend sur toute la largeur */
-    box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1); /* Ombre subtile */
-    z-index: 10; /* Toujours au-dessus */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    min-height: 60px; /* Hauteur minimale */
+    max-height: 550px; /* Hauteur maximale (200px pour textarea + 20px padding) */
+    transition: height 0.2s ease; /* Animation fluide */
 }
 
-/* Champ de saisie de texte */
-textarea {
+.chat-input textarea {
     flex-grow: 1;
     border: none;
-    border-radius: 20px;
-    padding: 10px 15px;
-    font-size: 15px;
-    max-height: 100px;
+    outline: none;
     resize: none;
-    box-sizing: border-box;
-    overflow: hidden; /* Empêche le débordement */
+    padding: 10px;
+    font-size: 16px;
+    background-color: transparent;
+    min-height: 40px; /* Correspond à la hauteur minimale du chat-input moins le padding */
+    max-height: 510px; /* Correspond à la hauteur maximale du chat-input moins le padding */
+    overflow-y: auto;
 }
+
+.chat-input button {
+    align-self: flex-end; /* Aligne le bouton en bas */
+    margin-left: 10px;
+}
+
 
 /* Bouton d'envoi */
 button {
@@ -160,4 +169,27 @@ button:hover {
 
 #stopButton:hover {
     background-color: #e74c3c;
+}
+
+.loading-indicator {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#prompt {
+    min-height: 40px; /* Hauteur minimale */
+    max-height: 200px; /* Hauteur maximale */
+    resize: none; /* Empêche le redimensionnement manuel */
+    overflow-y: auto; /* Ajoute une barre de défilement verticale si nécessaire */
+    box-sizing: border-box; /* Inclut le padding dans la hauteur totale */
 }
