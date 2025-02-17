@@ -1,4 +1,4 @@
-/* Style général */
+/* Global */
 body {
     display: flex;
     flex-direction: column;
@@ -6,11 +6,12 @@ body {
     margin: 0;
     background-color: #e5ddd5;
     font-family: Arial, sans-serif;
-    overflow: hidden; /* Empêche tout débordement inattendu */
-    padding: 10px; /* Ajoute de l'espace autour du contenu */
+    overflow: hidden;
+    padding: 10px;
     box-sizing: border-box;
 }
 
+/* Conteneur principal du chat */
 .chat-container {
     display: flex;
     flex-direction: column;
@@ -19,11 +20,11 @@ body {
     margin: 0 auto;
     background-color: #fff;
     box-shadow: 0 1px 1px 0 rgba(0,0,0,.06), 0 2px 5px 0 rgba(0,0,0,.2);
-    height: 100%; /* S'étend sur toute la hauteur de l'écran */
-    border-radius: 10px; /* Coins légèrement arrondis */
-    padding: 10px; /* Ajoute de l'espace à l'intérieur */
+    height: 100%;
+    border-radius: 10px;
+    padding: 10px;
     box-sizing: border-box;
-    padding-bottom: 80px; /* Espace pour éviter que les messages ne soient masqués par la zone de saisie */
+    padding-bottom: 80px;
 }
 
 /* Zone de messages */
@@ -34,12 +35,12 @@ body {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    gap: 10px; /* Ajoute de l'espace entre les messages */
+    gap: 10px;
 }
 
-/* Messages généraux */
+/* Messages */
 .message {
-    max-width: 80%; /* Taille maximale des bulles */
+    max-width: 80%;
     padding: 10px 15px;
     margin-bottom: 10px;
     border-radius: 15px;
@@ -48,28 +49,28 @@ body {
     position: relative;
 }
 
-/* Messages de l'utilisateur (alignés à droite) */
+/* Messages utilisateur */
 .user-message {
     align-self: flex-end;
-    background-color: #d4f8c4; /* Vert clair */
+    background-color: #d4f8c4;
     color: #333;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     text-align: right;
-    border-radius: 15px 15px 0 15px; /* Coins arrondis pour l'utilisateur */
+    border-radius: 15px 15px 0 15px;
 }
 
-/* Messages de l'IA (alignés à gauche) */
+/* Messages bot */
 .bot-message {
     align-self: flex-start;
-    background-color: #e6f3ff; /* Bleu clair */
+    background-color: #e6f3ff;
     color: #333;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     border: 1px solid #b3d8ff;
-    border-radius: 15px 15px 15px 0; /* Coins arrondis pour l'IA */
-    white-space: pre-wrap; /* Respecte les sauts de ligne (\n) */
+    border-radius: 15px 15px 15px 0;
+    white-space: pre-wrap;
 }
 
-/* Badges pour différencier les messages */
+/* Badges pour identifier les messages */
 .user-message::before,
 .bot-message::before {
     position: absolute;
@@ -82,12 +83,12 @@ body {
 
 .user-message::before {
     content: "Vous";
-    right: 10px; /* Aligné à droite pour vos messages */
+    right: 10px;
 }
 
 .bot-message::before {
     content: "IA";
-    left: 10px; /* Aligné à gauche pour les messages de l'IA */
+    left: 10px;
 }
 
 /* Zone de saisie fixée en bas */
@@ -101,29 +102,25 @@ body {
     right: 0;
     box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1);
     z-index: 10;
-    min-height: 60px; /* Hauteur minimale */
-    max-height: 550px; /* Hauteur maximale (200px pour textarea + 20px padding) */
-    transition: height 0.2s ease; /* Animation fluide */
+    min-height: 60px;
+    max-height: 550px;
+    transition: height 0.2s ease;
 }
 
+/* Champ de saisie avec redimensionnement manuel */
 .chat-input textarea {
     flex-grow: 1;
     border: none;
     outline: none;
-    resize: none;
+    resize: vertical; /* Permet le redimensionnement */
     padding: 10px;
     font-size: 16px;
     background-color: transparent;
-    min-height: 40px; /* Correspond à la hauteur minimale du chat-input moins le padding */
-    max-height: 510px; /* Correspond à la hauteur maximale du chat-input moins le padding */
-    overflow-y: auto;
+    min-height: 40px;
+    max-height: 400px; /* Augmenter la hauteur maximale */
+    overflow-y: auto; /* Conserver le défilement si nécessaire */
+    box-sizing: border-box;
 }
-
-.chat-input button {
-    align-self: flex-end; /* Aligne le bouton en bas */
-    margin-left: 10px;
-}
-
 
 /* Bouton d'envoi */
 button {
@@ -138,29 +135,17 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background-color 0.2s ease;
 }
 
 button:hover {
     background-color: #128C7E;
 }
-/* Ajoutez ces styles à la fin de votre fichier style.css */
 
+/* Boutons spécifiques */
 #sendButton, #stopButton {
-    background-color: #075e54;
-    color: white;
-    border: none;
-    border-radius: 50%;
     width: 40px;
     height: 40px;
-    margin-left: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#sendButton:hover, #stopButton:hover {
-    background-color: #128C7E;
 }
 
 #stopButton {
@@ -171,6 +156,7 @@ button:hover {
     background-color: #e74c3c;
 }
 
+/* Indicateur de chargement */
 .loading-indicator {
     display: inline-block;
     width: 20px;
@@ -181,15 +167,27 @@ button:hover {
     animation: spin 1s linear infinite;
     margin-left: 10px;
 }
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-#prompt {
-    min-height: 40px; /* Hauteur minimale */
-    max-height: 200px; /* Hauteur maximale */
-    resize: none; /* Empêche le redimensionnement manuel */
-    overflow-y: auto; /* Ajoute une barre de défilement verticale si nécessaire */
-    box-sizing: border-box; /* Inclut le padding dans la hauteur totale */
+/* Indicateur de saisie */
+.typing-indicator {
+    display: none;
+    align-self: flex-start;
+    background-color: #e6f3ff;
+    color: #666;
+    padding: 8px 12px;
+    border-radius: 15px;
+    font-style: italic;
+    font-size: 14px;
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
 }

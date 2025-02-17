@@ -5,7 +5,11 @@
 pid=$!
 sleep 5
 
-echo "Pulling llama model"
-ollama pull llama3.2:1b
+echo "Pulling Cookama"
+./bin/ollama pull MrSplatchy/Cookama
+
+# Vérification que le modèle est bien présent
+echo "Vérification du modèle"
+./bin/ollama list
 
 wait $pid

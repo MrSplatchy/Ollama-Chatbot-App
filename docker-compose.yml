@@ -19,6 +19,11 @@ services:
       - "11434:11434"
     networks:
       - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
 
 networks:
   app-network:

@@ -6,157 +6,23 @@
     <title>AI Chat</title>
     <link rel="stylesheet" type="text/css" href="/static/style.css">
 </head>
+
 <body>
+    
 <div class="chat-container">
+
     <div class="chat-header">AI Chat</div>
-    <div class="chat-messages" id="chatMessages">
-        <!-- Les messages seront ajoutés ici dynamiquement -->
-    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+
     <form id="promptForm" class="chat-input">
+
         <textarea id="prompt" name="prompt" placeholder="Type a message..."></textarea>
         <button type="button" id="sendButton">➤</button>
         <div id="loadingIndicator" class="loading-indicator" style="display: none;"></div>
+
     </form>
 </div>
- <script>
-     const promptForm = document.getElementById('promptForm');
-     const promptInput = document.getElementById('prompt');
-     const sendButton = document.getElementById('sendButton');
-     const chatMessages = document.getElementById('chatMessages');
-     let currentController = null;
-     let isGenerating = false;
 
-     sendButton.addEventListener('click', handleSendOrStop);
-
-     // Fonction pour ajuster automatiquement la hauteur du chat input
-     function autoResizeChatInput() {
-         const chatInput = document.querySelector('.chat-input');
-         const textarea = chatInput.querySelector('textarea');
-
-         // Réinitialiser la hauteur
-         textarea.style.height = 'auto';
-         chatInput.style.height = 'auto';
-
-         // Calculer la nouvelle hauteur
-         const newHeight = Math.min(textarea.scrollHeight, 200); // Maximum 200px
-
-         // Appliquer la nouvelle hauteur
-         textarea.style.height = newHeight + 'px';
-         chatInput.style.height = (newHeight + 20) + 'px'; // +20px pour le padding
-     }
-
-     // Appeler autoResizeChatInput lorsque l'utilisateur tape
-     promptInput.addEventListener('input', autoResizeChatInput);
-
-     async function handleSendOrStop() {
-         if (isGenerating) {
-             // Si on génère déjà, on arrête la génération
-             if (currentController) {
-                 currentController.abort();
-                 isGenerating = false;
-                 sendButton.textContent = '➤';
-                 sendButton.style.backgroundColor = '';
-                 document.getElementById('loadingIndicator').style.display = 'none';
-             }
-         } else {
-             // Sinon, on commence une nouvelle génération
-             await generateResponse();
-         }
-     }
-
-     async function generateResponse() {
-         const prompt = promptInput.value.trim();
-         if (prompt === '') return;
-
-         isGenerating = true;
-         sendButton.textContent = '■';
-         sendButton.style.backgroundColor = 'red';
-         document.getElementById('loadingIndicator').style.display = 'inline-block';
-
-         addMessage(prompt, 'user-message');
-         promptInput.value = '';
-         autoResizeChatInput(); // Ajuster la taille après avoir effacé le contenu
-
-         const botMessage = addMessage('Thinking...', 'bot-message');
-
-         try {
-             currentController = new AbortController();
-             const signal = currentController.signal;
-
-             const response = await fetch('/', {
-                 method: 'POST',
-                 headers: {
-                     'Content-Type': 'application/x-www-form-urlencoded',
-                 },
-                 body: new URLSearchParams({ prompt: prompt }),
-                 signal: signal
-             });
-
-             if (!response.ok) {
-                 throw new Error('Network response was not ok');
-             }
-
-             const reader = response.body.getReader();
-             const decoder = new TextDecoder('utf-8');
-
-             botMessage.innerHTML = '';
-
-             while (true) {
-                 const { done, value } = await reader.read();
-                 if (done) break;
-                 const textChunk = decoder.decode(value, { stream: true });
-                 botMessage.innerHTML += textChunk.replace(/\n/g, '<br>');
-                 chatMessages.scrollTop = chatMessages.scrollHeight;
-             }
-         } catch (error) {
-             if (error.name === 'AbortError') {
-                 console.log('Fetch aborted');
-                 botMessage.innerHTML += '<br><i>Message generation stopped.</i>';
-             } else {
-                 console.error('Fetch error:', error);
-                 botMessage.innerHTML = '<span style="color: red;">Error: Unable to get response. Please try again.</span>';
-             }
-         } finally {
-             isGenerating = false;
-             sendButton.textContent = '➤';
-             sendButton.style.backgroundColor = '';
-             currentController = null;
-             document.getElementById('loadingIndicator').style.display = 'none';
-         }
-     }
-
-     function addMessage(content, className) {
-         const messageElement = document.createElement('div');
-         messageElement.className = `message ${className}`;
-         messageElement.innerHTML = content;
-         chatMessages.appendChild(messageElement);
-         chatMessages.scrollTop = chatMessages.scrollHeight;
-         return messageElement;
-     }
-
-     // Écouter les touches pour arrêter la génération
-     document.addEventListener('keydown', function(event) {
-         if (event.key === 'Escape' && isGenerating) {
-             handleSendOrStop();
-         }
-     });
-
-     // Empêcher la soumission du formulaire par défaut
-     promptForm.addEventListener('submit', function(event) {
-         event.preventDefault();
-     });
-
-     // Gérer l'envoi du prompt avec la touche Entrée
-     promptInput.addEventListener('keydown', function(event) {
-         if (event.key === 'Enter' && !event.shiftKey) {
-             event.preventDefault(); // Empêcher le saut de ligne par défaut
-             handleSendOrStop();
-         }
-     });
-
-     // Initialiser la taille du chat input
-     autoResizeChatInput();
- </script>
+<script src="/static/chat.js"></script>
 </body>
 </html>
-

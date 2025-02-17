@@ -2,17 +2,54 @@ from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
 import requests
 import json
+import time
+import httpx
+import asyncio
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Conversion de la fonction en asynchrone
+    await wait_for_ollama_tag()
+    yield
 
-# Configuration de Jinja2 et des fichiers statiques
+app = FastAPI(lifespan=lifespan)
+
+
+
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Variable globale pour stocker l'historique de la conversation
 conversation_history = []
+
+# Modification de la fonction pour la rendre asynchrone
+async def wait_for_ollama_tag():
+    while True:
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get('http://ollama:11434/api/tags', timeout=5)
+                
+                if response.status_code == 200:
+                    models = response.json().get('models', [])
+                    model_names = [model.get('name', '') for model in models]
+                    print("Modèles disponibles:", model_names)
+                    
+                    # Vérification plus précise du nom du modèle
+                    target_model = "MrSplatchy/Cookama:latest"
+                    if any(target_model in name for name in model_names):
+                        print(f"Modèle {target_model} trouvé. Démarrage de l'application.")
+                        return
+                    else:
+                        print(f"Modèle {target_model} non trouvé dans la liste: {model_names}")
+                else:
+                    print(f"Erreur de réponse: {response.status_code}")
+
+        except Exception as e:
+            print(f"Erreur lors de la vérification du modèle: {str(e)}. Nouvelle tentative dans 10s...")
+
+        await asyncio.sleep(10)
 
 @app.get("/", response_class=HTMLResponse)
 def show_form(request: Request):
@@ -21,56 +58,47 @@ def show_form(request: Request):
 @app.post("/", response_class=HTMLResponse)
 async def ask(request: Request, prompt: str = Form(...)):
     global conversation_history
+    conversation_history = conversation_history[-8:]
+
+    conversation_history.append({"role": "user", "content": prompt})
 
     try:
-        # Ajouter le prompt de l'utilisateur à l'historique
-        conversation_history.append({"role": "user", "content": prompt})
-
-        # Préparer le contexte complet pour l'API
-        context = "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history])
-        # Envoi de la requête au modèle (API)
         res = requests.post(
             'http://ollama:11434/api/generate',
             json={
-                "prompt": context,
+                "prompt": "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history]),
                 "stream": True,
-                "model": "llama3.2:1b",
+                # Modification ici ↓
+                "model": "MrSplatchy/Cookama:latest",
+                "options": {
+                    "temperature": 0.5,
+                    "num_predict": 200,
+                    "num_threads": 8,
+                    "keep_alive": 300
+                }
             },
             headers={"Content-Type": "application/json"},
             stream=True
         )
 
-        if res.status_code != 200:
-            return StreamingResponse(
-                iter([f"Error: Unexpected status code {res.status_code}"]),
-                media_type="text/plain"
-            )
-
         def generate():
-            buffer = ""
             full_response = ""
-            for chunk in res.iter_content(chunk_size=16):
-                if chunk:
-                    buffer += chunk.decode('utf-8')
-                    while '}' in buffer:
-                        try:
-                            end = buffer.index('}') + 1
-                            data = json.loads(buffer[:end])
-                            if "response" in data:
-                                response_chunk = data["response"]
-                                full_response += response_chunk
-                                yield response_chunk
-                            buffer = buffer[end:]
-                        except json.JSONDecodeError:
-                            break
 
-            # Ajouter la réponse complète à l'historique de la conversation
+            for line in res.iter_lines():
+                if line:
+                    try:
+                        data = json.loads(line)
+                        if "response" in data:
+                            response_chunk = data["response"]
+                            full_response += response_chunk
+                            yield response_chunk
+                            
+                    except json.JSONDecodeError:
+                        continue
+
             conversation_history.append({"role": "assistant", "content": full_response})
 
         return StreamingResponse(generate(), media_type="text/plain")
+    
     except Exception as e:
-        return StreamingResponse(
-            iter([f"Error: {str(e)}"]),
-            media_type="text/plain"
-        )
-
+        return StreamingResponse(iter([f"Error: {str(e)}"]), media_type="text/plain")
