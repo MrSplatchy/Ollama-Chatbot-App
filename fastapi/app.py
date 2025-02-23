@@ -29,7 +29,7 @@ async def wait_for_ollama_tag():
     while True:
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get('http://ollama:11434/api/tags', timeout=5)
+                response = await client.get('http://ollama:11434/api/tags', timeout=55)
                 
                 if response.status_code == 200:
                     models = response.json().get('models', [])
