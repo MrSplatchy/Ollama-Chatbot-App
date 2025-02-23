@@ -12,7 +12,7 @@ import asyncio
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Conversion de la fonction en asynchrone
-    await wait_for_ollama_tag()
+    await wait_for_ollama_tag(), health_check()
     yield
 
 app = FastAPI(lifespan=lifespan)
