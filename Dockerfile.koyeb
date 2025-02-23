@@ -3,4 +3,4 @@ FROM koyeb/docker-compose
 COPY . /app
 
 
-CMD ["docker-compose", "-f", "/app/docker-compose.yaml", "up"]
+CMD ["docker-compose", "-f", "docker-compose.yaml", "up"]
