@@ -102,3 +102,8 @@ async def ask(request: Request, prompt: str = Form(...)):
     
     except Exception as e:
         return StreamingResponse(iter([f"Error: {str(e)}"]), media_type="text/plain")
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
