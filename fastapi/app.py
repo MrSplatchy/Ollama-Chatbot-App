@@ -106,4 +106,6 @@ async def ask(request: Request, prompt: str = Form(...)):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    while True:
+        return {"status": "ok"}
+
