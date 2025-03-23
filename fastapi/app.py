@@ -72,8 +72,8 @@ async def ask(request: Request, prompt: str = Form(...)):
                 "model": "MrSplatchy/Cookama:latest",
                 "options": {
                     "temperature": 0.5,
-                    "num_predict": 1000,
-                    "num_ctx": 9000,
+                    "num_predict": 1024,
+                    "num_ctx": 6000,
                 }
             },
             headers={"Content-Type": "application/json"},
