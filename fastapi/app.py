@@ -73,11 +73,7 @@ async def ask(request: Request, prompt: str = Form(...)):
                 "options": {
                     "temperature": 0.5,
                     "num_predict": 200,
-                    "num_threads": 8,
-                    "keep_alive": 300,
-                    "num_ctx": 8192,
-                    "max_tokens": 16000,
-                    "max_new_tokens": 16000
+                    "num_ctx": 9000,
                 }
             },
             headers={"Content-Type": "application/json"},
