@@ -72,7 +72,7 @@ async def ask(request: Request, prompt: str = Form(...)):
                 "model": "MrSplatchy/Cookama:latest",
                 "options": {
                     "temperature": 0.5,
-                    "num_predict": 200,
+                    "num_predict": 1000,
                     "num_ctx": 9000,
                 }
             },
