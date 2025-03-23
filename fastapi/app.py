@@ -75,7 +75,7 @@ async def ask(request: Request, prompt: str = Form(...)):
                     "num_predict": 200,
                     "num_threads": 8,
                     "keep_alive": 300,
-                    "num_ctx": 65536
+                    "num_ctx": 16384
                 }
             },
             headers={"Content-Type": "application/json"},
