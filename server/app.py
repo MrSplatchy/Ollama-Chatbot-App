@@ -1,0 +1,86 @@
+from fastapi import FastAPI, Query
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+from langchain_core.messages import HumanMessage
+
+import json
+import subprocess
+
+from model import app_graph, llm as model
+from pydantic import BaseModel
+
+model_name = "MrSplatchy/Cookama"
+
+
+def install_model(model_name: str):
+    print(f"Installing model {model_name}...")
+    try:
+        subprocess.run(["ollama", "pull", model_name], check=True, timeout=600)
+
+    except subprocess.CalledProcessError:
+        print(
+            f"\nModel {model_name} Cannot be downloaded, \nplease check your internet connection"
+        )
+        raise SystemExit(1)
+
+    except subprocess.TimeoutExpired:
+        print(
+            f"\nModel {model_name} is TAKING TOO LONG to download, \nStoping  Backend"
+        )  # No this isnt a deltarune referencee
+        raise SystemExit(1)
+
+    return print(f"Model {model_name} ready to use")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    install_model(model_name)
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+class ChatRequest(BaseModel):
+    message: str
+    thread_id: int
+
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.post("/", response_class=HTMLResponse)
+async def chat(request: ChatRequest, stream: bool = Query(False)):
+
+    if not stream:
+        result = app_graph.invoke(
+            {"messages": [HumanMessage(content=request.message)]},
+            config={"configurable": {"thread_id": request.thread_id}},
+        )
+        return JSONResponse({"reply": result["messages"][-1].content})
+
+    # -------- STREAMING SSE --------
+    async def event_generator():
+        async for chunk in model.astream(request.message):
+            yield f"data: {json.dumps({'token': chunk.content})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+@app.get("/health")
+async def health_check():
+    while True:
+        return {"status": "ok"}
