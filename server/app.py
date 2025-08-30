@@ -1,17 +1,18 @@
 from fastapi import FastAPI, Query
-from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from langchain_core.messages import HumanMessage
 
 import json
 import subprocess
+import os
 
 from model import app_graph, llm as model
 from pydantic import BaseModel
-import uvicorn
 
-model_name = "MrSplatchy/Cookama" # You can change the model here to any ollama model you want
+
+model_name = os.getenv("MODEL_NAME", "MrSplatchy/Cookama")  # You can change the model here to any ollama model you want in the .env file
 
 
 def install_model(model_name: str):
@@ -100,4 +101,5 @@ async def health_check():
 
 
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=9000)
