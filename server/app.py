@@ -7,6 +7,8 @@ from langchain_core.messages import HumanMessage
 import json
 import subprocess
 import os
+import asyncio
+import logging
 
 from model import app_graph, llm as model
 from pydantic import BaseModel
@@ -22,14 +24,14 @@ def install_model(model_name: str):
 
     except subprocess.CalledProcessError:
         print(
-            f"\nModel {model_name} Cannot be downloaded, \nplease check your internet connection"
+            f"\nModel {model_name} cannot be downloaded, \nPlease check your internet connection"
         )
         raise SystemExit(1)
 
     except subprocess.TimeoutExpired:
         print(
             f"\nModel {model_name} is TAKING TOO LONG to download, \nStoping  Backend"
-        )  # No this isnt a deltarune referencee
+        )  # No this isn't a Deltarune referencee
         raise SystemExit(1)
 
     return print(f"Model {model_name} ready to use")
@@ -69,21 +71,31 @@ async def chat(request: ChatRequest, stream: bool = Query(False)):
     if stream:
         # -------- STREAMING SSE --------
         async def event_generator():
-            #print(f"Thread ID: {request.thread_id}\nStreaming")
             try:
                 async for chunk in model.astream(request.message):
                     if chunk.content:
-                        #print(f"Chunk: {chunk.content}")
                         yield f"data: {json.dumps({'token': chunk.content})}\n\n"
                 yield "data: [DONE]\n\n"
+            except asyncio.CancelledError:
+                # Client disconnected; silently exit
+                return
             except Exception as e:
-                print(f"Streaming error: {e}")
+                logging.error(f"Streaming error: {e}")
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                yield "data: [DONE]\n\n"
+                return
 
-        return StreamingResponse(event_generator(), media_type="text/event-stream")
+        return StreamingResponse(
+            event_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no"
+            }
+        )
     
     elif not stream:
-        #print(f"Thread ID: {request.thread_id}\nNot Streaming")
+        # -------- NON-STREAMING --------
         try:
             result = app_graph.invoke(
                 {"messages": [HumanMessage(content=request.message)]},
@@ -93,11 +105,6 @@ async def chat(request: ChatRequest, stream: bool = Query(False)):
         except Exception as e:
             return JSONResponse({"error": str(e)}, status_code=500)
 
-
-@app.get("/health")
-async def health_check():
-    while True:
-        return {"status": "ok"}
 
 
 if __name__ == "__main__":
