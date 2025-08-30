@@ -21,7 +21,7 @@ def call_model(state: AgentState) -> AgentState:
 graph = StateGraph(AgentState)
 graph.add_node("chat", call_model)
 graph.set_entry_point("chat")
-graph.add_edge("chat", "chat")
+graph.add_edge("chat", END)
 
 memory = MemorySaver()
 app_graph = graph.compile(checkpointer=memory)

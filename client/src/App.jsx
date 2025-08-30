@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import "./App.css";
+import { fetchEventSource } from '@microsoft/fetch-event-source'
 
 export default function Chat() {
 
@@ -24,9 +25,8 @@ export default function Chat() {
     setLoading(true);
 
     if (!streamMode) {
-      // ---------- NOT STREAMING ----------
       try {
-        const res = await fetch("http://localhost:8000/?stream=false", {
+        const res = await fetch("http://127.0.0.1:9000/?stream=false", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: input, thread_id: 1 }),
@@ -34,42 +34,64 @@ export default function Chat() {
         const data = await res.json();
         setMessages([...newMessages, { role: "ai", content: data.reply }]);
       } catch (err) {
-        setMessages([...newMessages, { role: "ai", content: "⚠️ 500" }]);
+        setMessages([...newMessages, { role: "ai", content: err.message }]);
       } finally {
         setLoading(false);
       }
     } else {
-      // ---------- STREAMING ----------
-      let aiMessage = { role: "ai", content: "" };
-      setMessages([...newMessages, aiMessage]);
-
-      const eventSource = new EventSource(
-        `http://localhost:8000/?stream=true&message=${encodeURIComponent(input)}&thread_id=1`
-      );
-
-      eventSource.onmessage = (event) => {
-        if (event.data === "[DONE]") {
-          setLoading(false);
-          eventSource.close();
-        } else {
-          const data = JSON.parse(event.data);
-          aiMessage.content += data.token;
-          setMessages([...newMessages, { ...aiMessage }]);
-        }
-      };
-
-      eventSource.onerror = () => {
-        aiMessage.content += "\n⚠️ 500";
-        setMessages([...newMessages, { ...aiMessage }]);
+      const aiMessage = { role: "ai", content: "" };
+      let currentMessages = [...newMessages, aiMessage];
+      setMessages(currentMessages);
+      
+      try {
+        await fetchEventSource("http://127.0.0.1:9000/?stream=true", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            stream: true,
+            message: input,
+            thread_id: 1,
+          }),
+          onmessage(event) {
+            if (event.data === "[DONE]") {
+              setLoading(false);
+            } else {
+              const data = JSON.parse(event.data);
+              setMessages(prevMessages => {
+                const updated = [...prevMessages];
+                updated[updated.length - 1] = {
+                  ...updated[updated.length - 1],
+                  content: updated[updated.length - 1].content + data.token
+                };
+                return updated;
+              });
+            }
+          },
+          onerror(err) {
+            setMessages(prevMessages => {
+              const updated = [...prevMessages];
+              updated[updated.length - 1] = {
+                ...updated[updated.length - 1],
+                content: updated[updated.length - 1].content + "\n⚠️ Erreur de connexion"
+              };
+              return updated;
+            });
+            setLoading(false);
+            throw err;
+          },
+        });
+      } catch (err) {
+        console.error("Streaming error:", err);
+      } finally {
         setLoading(false);
-        eventSource.close();
-      };
+      }
     }
   };
 
   return (
     <div className="chat-container">
-      {/* Toggle en haut à gauche */}
       <div className="chat-header">
         <label className="chat-toggle">
           <input
@@ -80,7 +102,6 @@ export default function Chat() {
           <span>Streaming</span>
         </label>
       </div>
-      {/* Messages */}
       <div className="chat-messages">
         {messages.map((m, i) => (
           <div
@@ -97,7 +118,6 @@ export default function Chat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Zone input */}
       <div className="chat-input">
         <textarea
           value={input}

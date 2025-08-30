@@ -9,8 +9,9 @@ import subprocess
 
 from model import app_graph, llm as model
 from pydantic import BaseModel
+import uvicorn
 
-model_name = "MrSplatchy/Cookama"
+model_name = "MrSplatchy/Cookama" # You can change the model here to any ollama model you want
 
 
 def install_model(model_name: str):
@@ -61,26 +62,42 @@ app.add_middleware(
 )
 
 
-@app.post("/", response_class=HTMLResponse)
+@app.post("/")
 async def chat(request: ChatRequest, stream: bool = Query(False)):
 
-    if not stream:
-        result = app_graph.invoke(
-            {"messages": [HumanMessage(content=request.message)]},
-            config={"configurable": {"thread_id": request.thread_id}},
-        )
-        return JSONResponse({"reply": result["messages"][-1].content})
+    if stream:
+        # -------- STREAMING SSE --------
+        async def event_generator():
+            #print(f"Thread ID: {request.thread_id}\nStreaming")
+            try:
+                async for chunk in model.astream(request.message):
+                    if chunk.content:
+                        #print(f"Chunk: {chunk.content}")
+                        yield f"data: {json.dumps({'token': chunk.content})}\n\n"
+                yield "data: [DONE]\n\n"
+            except Exception as e:
+                print(f"Streaming error: {e}")
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
-    # -------- STREAMING SSE --------
-    async def event_generator():
-        async for chunk in model.astream(request.message):
-            yield f"data: {json.dumps({'token': chunk.content})}\n\n"
-        yield "data: [DONE]\n\n"
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
+    
+    elif not stream:
+        #print(f"Thread ID: {request.thread_id}\nNot Streaming")
+        try:
+            result = app_graph.invoke(
+                {"messages": [HumanMessage(content=request.message)]},
+                config={"configurable": {"thread_id": request.thread_id}},
+            )
+            return JSONResponse({"reply": result["messages"][-1].content})
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
 
 
 @app.get("/health")
 async def health_check():
     while True:
         return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=9000)
