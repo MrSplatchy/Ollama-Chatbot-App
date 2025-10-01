@@ -15,7 +15,11 @@ body {
 .chat-container {
     display: flex;
     flex-direction: column;
+    max-width: 800px;
     width: 100%;
+    margin: 0 auto;
+    background-color: #fff;
+    box-shadow: 0 1px 1px 0 rgba(0,0,0,.06), 0 2px 5px 0 rgba(0,0,0,.2);
     height: 100%;
     border-radius: 10px;
     padding: 10px;
@@ -186,36 +190,4 @@ button:hover {
     0% { opacity: 0.5; }
     50% { opacity: 1; }
     100% { opacity: 0.5; }
-}
-
-
-/* Header compact du chat */
-.chat-header {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    font-size: 13px;
-    padding: 4px 8px;
-    background: transparent;   /* plus de gros fond blanc */
-    border: none;
-    margin-bottom: 5px;
-}
-
-/* Label du toggle */
-.chat-toggle {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    color: #444;
-    font-weight: 500;
-    background: #f5f5f5;
-    padding: 2px 6px;
-    border-radius: 6px;
-    font-size: 12px;
-    border: 1px solid #ddd;
-}
-
-.chat-toggle input {
-    cursor: pointer;
 }
