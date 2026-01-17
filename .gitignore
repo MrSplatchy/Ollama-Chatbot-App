@@ -1,8 +1,2 @@
-server/.env
-server/__pycache__
-server/*.pyc
-client/node_modules/
-client/.env
-.vscode/
-.DS_Store
-.vscode
+app/.env
+app/__pycache__

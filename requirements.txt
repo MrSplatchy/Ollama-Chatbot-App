@@ -1,11 +1,8 @@
-<<<<<<< HEAD
-# To ensure app dependencies are ported from your virtual environment/host machine into your container, run 'pip freeze > requirements.txt' in the terminal to overwrite this file
-=======
 python-multipart==0.0.20
 uvicorn==0.34.0
 fastapi==0.115.6
 jinja2==3.1.5
 requests==2.32.3
-ollama==0.4.7
+ollama==0.6.0
 httpx==0.28.1
->>>>>>> parent of 04cb8a2 (refactor: Changes the chat logic to langgraph and the showing logic to react)
+dotenv== 0.9.9

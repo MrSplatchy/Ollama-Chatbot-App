@@ -5,16 +5,16 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Copie les fichiers nécessaires
-COPY ./fastapi /app
+COPY ./app /app
 
 # Copie le fichier requirements.txt
 COPY requirements.txt /app/
 
 # Installe les dépendances
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install  -r requirements.txt
 
 # Expose le port utilisé par FastAPI
 EXPOSE 8000
 
 # Commande pour lancer l'application
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app"]
