@@ -1,0 +1,12 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    
+  app:
+    build: 
+      context: . 
+    ports: ["8000:8000"]
+    depends_on: [ollama]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434

@@ -1,13 +1,14 @@
-from ollama import chat
+import ollama
 from dotenv import load_dotenv
 from os import getenv
 
 load_dotenv()
 model = getenv("MODEL")
-
+url = getenv('OLLAMA_HOST')
 async def generateResponse(content, chat_history: list): 
     # LLM Preparations
-    response = chat(
+    client = ollama.Client(host=url)
+    response = client.chat(
         model = model,
         messages=chat_history,
         stream=True,

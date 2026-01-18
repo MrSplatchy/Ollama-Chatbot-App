@@ -1,20 +1,11 @@
-# Utilise une image Python légère
 FROM python:3.12-slim
 
-# Configure l'environnement de travail
-WORKDIR /app
+WORKDIR /server
 
-# Copie les fichiers nécessaires
-COPY ./app /app
+COPY . /server/
 
-# Copie le fichier requirements.txt
-COPY requirements.txt /app/
+RUN pip install -r requirements.txt --no-cache-dir
 
-# Installe les dépendances
-RUN pip install  -r requirements.txt
+EXPOSE 8000 
 
-# Expose le port utilisé par FastAPI
-EXPOSE 8000
-
-# Commande pour lancer l'application
-CMD ["uvicorn", "app:app"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
