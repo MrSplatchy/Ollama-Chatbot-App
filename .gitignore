@@ -1,2 +1,13 @@
+<<<<<<< HEAD
 .env
 __pycache__
+=======
+server/.env
+server/__pycache__
+server/*.pyc
+client/node_modules/
+client/.env
+.vscode/
+.DS_Store
+.vscode
+>>>>>>> parent of 71b34db (refactor: changed the generate endpoint into a different file, removing the need for another dockerfile)
