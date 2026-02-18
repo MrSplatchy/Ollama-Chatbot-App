@@ -1,4 +1,17 @@
 services:
+<<<<<<< HEAD
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    
+  app:
+    build: 
+      context: . 
+    ports: ["8000:8000"]
+    depends_on: [ollama]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+=======
   fastapi-app:
     build:
       context: .
@@ -24,3 +37,4 @@ services:
 networks:
   app-network:
     driver: bridge
+>>>>>>> parent of 71b34db (refactor: changed the generate endpoint into a different file, removing the need for another dockerfile)

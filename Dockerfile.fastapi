@@ -1,15 +1,20 @@
-# Utilise une image Python légère
 FROM python:3.12-slim
 
-# Configure l'environnement de travail
-WORKDIR /app
+WORKDIR /server
 
+<<<<<<< HEAD:Dockerfile
+COPY . /server/
+=======
 # Copie les fichiers nécessaires
 COPY ./fastapi /app
+>>>>>>> parent of 71b34db (refactor: changed the generate endpoint into a different file, removing the need for another dockerfile):Dockerfile.fastapi
 
-# Copie le fichier requirements.txt
-COPY requirements.txt /app/
+RUN pip install -r requirements.txt --no-cache-dir
 
+<<<<<<< HEAD:Dockerfile
+EXPOSE 8000 
+
+=======
 # Installe les dépendances
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -17,4 +22,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8000
 
 # Commande pour lancer l'application
+>>>>>>> parent of 71b34db (refactor: changed the generate endpoint into a different file, removing the need for another dockerfile):Dockerfile.fastapi
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
